@@ -21,7 +21,10 @@
 
 ;; This module enables exporting Org files to the LaTeX `brev' class.
 ;; The `brev' class is a class for writing letters, that can be found
-;; at <http://www.asgeirnilsen.com/latex/>.
+;; at <http://www.asgeirnilsen.com/latex/>.  To use it, add the
+;; following option at the beginning of your Org file:
+;;
+;; #+LaTeX_CLASS: brev
 ;;
 ;; A certain structure is required in the Org file.  The first level 1
 ;; heading should have the tag :from:, and contain the sender's name
