@@ -1,0 +1,25 @@
+#+LaTeX_CLASS: brev
+#+OPTIONS: toc:nil
+
+* Mr Foo Sender							       :from:
+12 Sender Street
+Footown
+A12 5AC
+* Foobar Inc
+Foobar street
+Nowhere
+B2 3BC
+** Dear Sir/Madam,
+Foo?
+** Yours faithfully,						    :closing:
+Me
+* Frobozz Ltd
+Somewhere
+Far Away
+C3 1AA
+** Dear Mr Johnson,
+Bar?
+
+Baz?  What are you going to do about that?
+** Yours sincerely,						    :closing:
+A friend
