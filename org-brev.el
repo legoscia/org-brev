@@ -1,3 +1,40 @@
+;;; org-brev.el --- export Org files to LaTeX using the brev class
+
+;; Copyright (C) 2009  Magnus Henoch
+
+;; Author: Magnus Henoch <magnus.henoch@gmail.com>
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; This module enables exporting Org files to the LaTeX `brev' class.
+;; The `brev' class is a class for writing letters, that can be found
+;; at <http://www.asgeirnilsen.com/latex/>.
+;;
+;; A certain structure is required in the Org file.  The first level 1
+;; heading should have the tag :from:, and contain the sender's name
+;; in the heading itself, and the sender's address in the content.
+;; Every other level 1 heading is a separate letter, with the
+;; recipient's name in the heading and the recipient's address in the
+;; content.  The text of the letter starts with a level 2 heading,
+;; which becomes the \opening phrase, and concludes with a second
+;; level 2 heading with the tag :closing:, which contains the closing
+;; phrase in the heading and the signature in the content.
+
+;;; Code:
+
 (require 'org-latex)
 (require 'org-beamer)
 
@@ -77,3 +114,6 @@
 	;; backslashes.
 	(while (search-forward-regexp "\\(\n\\)." (1- (point-max)) t)
 	  (replace-match "\\\\" nil t nil 1))))))
+
+(provide 'org-brev)
+;;; org-brev.el ends here
