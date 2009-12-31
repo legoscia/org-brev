@@ -43,6 +43,19 @@
 
 (eval-when-compile (require 'cl))
 
+(defgroup org-brev nil
+  "Options for exporting Org files using the LaTeX `brev' class."
+  :group 'org)
+
+(defcustom org-brev-recipient-address-prefix ""
+  "Text to add before the recipient address.
+This can be used to adapt the output to various kinds of window
+envelopes.  For example, if the first few lines of the address are not
+visible, try:
+
+\\vspace{2cm} \\\\"
+  :type 'string)
+
 (aput 'org-export-latex-classes
       "brev"
       '("\\documentclass{brev}
@@ -83,7 +96,7 @@
 		       '(org-insert-hook org-brev-unparagraph))))
 	  (list heading in out in out)))
        (t
-	(let ((in "\\begin{letter}{%s \\\\")
+	(let ((in (concat "\\begin{letter}{" org-brev-recipient-address-prefix "%s \\\\"))
 	      (out "\\end{letter}"))
 	  (setq org-brev--recipient-address-open t)
 	  (setq org-brev--had-opening nil)
