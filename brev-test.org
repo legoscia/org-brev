@@ -1,5 +1,5 @@
 #+LaTeX_CLASS: brev
-#+OPTIONS: toc:nil
+#+LaTeX_CLASS_OPTIONS: [english,british]
 
 * Mr Foo Sender							       :from:
 12 Sender Street
