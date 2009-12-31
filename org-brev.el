@@ -33,8 +33,8 @@
 ;; recipient's name in the heading and the recipient's address in the
 ;; content.  The text of the letter starts with a level 2 heading,
 ;; which becomes the \opening phrase, and concludes with a second
-;; level 2 heading with the tag :closing:, which contains the closing
-;; phrase in the heading and the signature in the content.
+;; level 2 heading, which contains the closing phrase in the heading
+;; and the signature in the content.
 
 ;;; Code:
 
@@ -55,6 +55,11 @@
   "Non-nil if we need to close the recipient address.
 \(Internal variable.)")
 (make-variable-buffer-local 'org-brev--recipient-address-open)
+
+(defvar org-brev--had-opening nil
+  "Non-nil if the current letter has already had an opening phrase.
+\(Internal variable.)")
+(make-variable-buffer-local 'org-brev--had-opening)
 
 (defun org-brev-after-initial-vars ()
   (when (string-match "\\\\documentclass\\(\\[[^][]*?\\]\\)?{brev}"
@@ -81,6 +86,7 @@
 	(let ((in "\\begin{letter}{%s \\\\")
 	      (out "\\end{letter}"))
 	  (setq org-brev--recipient-address-open t)
+	  (setq org-brev--had-opening nil)
 	  (list heading in out in out)))))
      ((eql level 2)
       (when org-brev--recipient-address-open
@@ -88,7 +94,7 @@
 	(insert "}\n")
 	(setq org-brev--recipient-address-open nil))
       (cond
-       ((member "closing" tags)
+       (org-brev--had-opening
 	;; This is a bit tricky, since the \closing text is in
 	;; the heading, but we need \signature to be _before_
 	;; \closing.
@@ -101,6 +107,7 @@
 		       '(org-insert-hook org-brev-unparagraph))))
 	  (list text in out in out)))
        (t
+	(setq org-brev--had-opening t)
 	(let ((in (concat "\\opening{%s}"))
 	      (out ""))
 	  (list text in out in out))))))))
