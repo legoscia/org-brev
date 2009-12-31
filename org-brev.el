@@ -45,7 +45,7 @@
 
 (aput 'org-export-latex-classes
       "brev"
-      '("\\documentclass[english,british]{brev}
+      '("\\documentclass{brev}
 \\usepackage[utf8]{inputenc}
 \\usepackage[T1]{fontenc}
 "
