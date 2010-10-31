@@ -56,6 +56,7 @@ visible, try:
 \\vspace{2cm} \\\\"
   :type 'string)
 
+(require 'assoc)
 (aput 'org-export-latex-classes
       "brev"
       '("\\documentclass{brev}
