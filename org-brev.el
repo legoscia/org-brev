@@ -78,7 +78,10 @@ visible, try:
 (defun org-brev-after-initial-vars ()
   (when (string-match "\\\\documentclass\\(\\[[^][]*?\\]\\)?{brev}"
 		      org-export-latex-header)
-    (setq org-brev--recipient-address-open nil)))
+    (setq org-brev--recipient-address-open nil)
+    ;; Having a table of contents just gives a blank page... Let's
+    ;; disable it.
+    (set (make-local-variable 'org-export-with-toc) nil)))
 
 (add-hook 'org-export-latex-after-initial-vars-hook
 	  'org-brev-after-initial-vars)
