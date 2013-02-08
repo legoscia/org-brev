@@ -1,8 +1,9 @@
 ;;; org-brev.el --- export Org files to LaTeX using the brev class
 
-;; Copyright (C) 2009  Magnus Henoch
+;; Copyright (C) 2009, 2013  Magnus Henoch
 
 ;; Author: Magnus Henoch <magnus.henoch@gmail.com>
+;; Version: 0.1
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -35,6 +36,10 @@
 ;; which becomes the \opening phrase, and concludes with a second
 ;; level 2 heading, which contains the closing phrase in the heading
 ;; and the signature in the content.
+;;
+;; If you are running Emacs 24.1 or later, install this module by
+;; typing M-x package-install-file and specifying this file
+;; (org-brev.el).
 
 ;;; Code:
 
@@ -56,14 +61,20 @@ visible, try:
 \\vspace{2cm} \\\\"
   :type 'string)
 
-(require 'assoc)
-(aput 'org-export-latex-classes
-      "brev"
-      '("\\documentclass{brev}
+;;;###autoload
+(eval-after-load "org-latex"
+  ;; Remove any existing "brev" definition.
+  '(let ((entry (assoc "brev" org-export-latex-classes)))
+     (when entry
+       (setq org-export-latex-classes
+	     (remq entry org-export-latex-classes)))
+     (add-to-list
+      'org-export-latex-classes
+      '("brev" "\\documentclass{brev}
 \\usepackage[utf8]{inputenc}
 \\usepackage[T1]{fontenc}
 "
-	org-brev-sectioning))
+	org-brev-sectioning))))
 
 (defvar org-brev--recipient-address-open nil
   "Non-nil if we need to close the recipient address.
@@ -86,6 +97,7 @@ visible, try:
 (add-hook 'org-export-latex-after-initial-vars-hook
 	  'org-brev-after-initial-vars)
 
+;;;###autoload
 (defun org-brev-sectioning (level text)
   (destructuring-bind (tags heading)
       (with-temp-buffer
