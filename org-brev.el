@@ -1,9 +1,9 @@
 ;;; org-brev.el --- export Org files to LaTeX using the brev class
 
-;; Copyright (C) 2009, 2013  Magnus Henoch
+;; Copyright (C) 2009, 2013, 2014  Magnus Henoch
 
 ;; Author: Magnus Henoch <magnus.henoch@gmail.com>
-;; Version: 0.1
+;; Version: 0.2
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -43,8 +43,8 @@
 
 ;;; Code:
 
-(require 'org-latex)
-(require 'org-beamer)
+(require 'ox-latex)
+(require 'ox-beamer)
 
 (eval-when-compile (require 'cl))
 
@@ -62,19 +62,55 @@ visible, try:
   :type 'string)
 
 ;;;###autoload
-(eval-after-load "org-latex"
+(eval-after-load "ox-latex"
   ;; Remove any existing "brev" definition.
-  '(let ((entry (assoc "brev" org-export-latex-classes)))
-     (when entry
-       (setq org-export-latex-classes
-	     (remq entry org-export-latex-classes)))
-     (add-to-list
-      'org-export-latex-classes
-      '("brev" "\\documentclass{brev}
-\\usepackage[utf8]{inputenc}
-\\usepackage[T1]{fontenc}
-"
-	org-brev-sectioning))))
+  '(progn
+     (let ((entry (assoc "brev" org-latex-classes)))
+       (when entry
+	 (setq org-latex-classes
+	       (remq entry org-latex-classes)))
+       (add-to-list
+	'org-latex-classes
+	'("brev" "\\documentclass{brev}"
+	  ())))
+     (org-export-define-derived-backend 'brev 'latex
+       :translate-alist '((headline . org-brev-headline))
+       ;; Disable title and table of contents
+       :options-alist '((:title nil nil "" t)
+			(:with-toc nil nil nil t))
+       :menu-entry
+       '(?b "Export with Brev"
+	    ((?L "As LaTeX buffer" org-brev-export-as-latex)
+	     (?l "As LaTeX file" org-brev-export-to-latex)
+	     (?p "As PDF file" org-brev-export-to-pdf)
+	     (?o "As PDF file and open"
+		 (lambda (a s v b)
+		   (if a (org-brev-export-to-pdf t s v b)
+		     (org-open-file (org-brev-export-to-pdf nil s v b))))))))))
+
+;;;###autoload
+(defun org-brev-export-as-latex
+  (&optional async subtreep visible-only body-only ext-plist)
+  (interactive)
+  (org-export-to-buffer 'brev "*Org BREV Export*"
+    async subtreep visible-only body-only ext-plist (lambda () (LaTeX-mode))))
+
+;;;###autoload
+(defun org-brev-export-to-latex
+    (&optional async subtreep visible-only body-only ext-plist)
+  (interactive)
+  (let ((file (org-export-output-file-name ".tex" subtreep)))
+    (org-export-to-file 'brev file
+      async subtreep visible-only body-only ext-plist)))
+
+;;;###autoload
+(defun org-brev-export-to-pdf
+  (&optional async subtreep visible-only body-only ext-plist)
+  (interactive)
+  (let ((file (org-export-output-file-name ".tex" subtreep)))
+    (org-export-to-file 'brev file
+      async subtreep visible-only body-only ext-plist
+      (lambda (file) (org-latex-compile file)))))
 
 (defvar org-brev--recipient-address-open nil
   "Non-nil if we need to close the recipient address.
@@ -86,73 +122,45 @@ visible, try:
 \(Internal variable.)")
 (make-variable-buffer-local 'org-brev--had-opening)
 
-(defun org-brev-after-initial-vars ()
-  (when (string-match "\\\\documentclass\\(\\[[^][]*?\\]\\)?{brev}"
-		      org-export-latex-header)
-    (setq org-brev--recipient-address-open nil)
-    ;; Having a table of contents just gives a blank page... Let's
-    ;; disable it.
-    (set (make-local-variable 'org-export-with-toc) nil)))
-
-(add-hook 'org-export-latex-after-initial-vars-hook
-	  'org-brev-after-initial-vars)
-
-;;;###autoload
-(defun org-brev-sectioning (level text)
-  (destructuring-bind (tags heading)
-      (with-temp-buffer
-	(insert "* " text)
-	(list (org-get-tags) (org-get-heading :no-tags)))
+(defun org-brev-headline (headline contents info)
+  (let ((tags (org-export-get-tags headline info))
+	(heading (car (org-element-property :title headline)))
+	(level (org-element-property :level headline)))
     (cond
      ((eql level 1)
       (cond
        ((member "from" tags)
-	(let ((in "\\name{%s}\n\\address{")
-	      (out (org-add-props (copy-sequence "}")
-		       '(org-insert-hook org-brev-unparagraph))))
-	  (list heading in out in out)))
+	(concat "\\name{" heading "}\n\\address{"
+		(replace-regexp-in-string "\n" "\\\\\\\\" contents)
+		"}\n"))
        (t
-	(let ((in (concat "\\begin{letter}{" org-brev-recipient-address-prefix "%s \\\\"))
-	      (out "\\end{letter}"))
-	  (setq org-brev--recipient-address-open t)
-	  (setq org-brev--had-opening nil)
-	  (list heading in out in out)))))
+	(setq org-brev--recipient-address-open t)
+	(setq org-brev--had-opening nil)
+	(concat "\\begin{letter}{" org-brev-recipient-address-prefix
+		heading " \\\\"
+		(or (and (string-match "\\\\opening" contents)
+			 (let ((address (substring contents 0 (match-beginning 0)))
+			       (rest (substring contents (match-beginning 0))))
+			   (concat
+			    (replace-regexp-in-string "\n" "\\\\\\\\" address)
+			    "}\n"
+			    rest)))
+		    ;; No opening?...
+		    (replace-regexp-in-string "\n" "\\\\\\\\" contents))
+		"\n\\end{letter}"))))
      ((eql level 2)
-      (when org-brev--recipient-address-open
-	(org-brev-unparagraph)
-	(insert "}\n")
-	(setq org-brev--recipient-address-open nil))
-      (cond
-       (org-brev--had-opening
-	;; This is a bit tricky, since the \closing text is in
-	;; the heading, but we need \signature to be _before_
-	;; \closing.
-	(let ((in (concat "\\signature{"))
-	      (out (org-add-props
-		       (concat "}\n"
-			       "\\closing{"
-			       heading
-			       "}")
-		       '(org-insert-hook org-brev-unparagraph))))
-	  (list text in out in out)))
-       (t
-	(setq org-brev--had-opening t)
-	(let ((in (concat "\\opening{%s}"))
-	      (out ""))
-	  (list text in out in out))))))))
-
-(defun org-brev-unparagraph ()
-  (save-excursion
-    (let ((end (point))
-	  (beg (search-backward-regexp "^\\\\label{.*}\n\n")))
-      (save-restriction
-	(narrow-to-region beg end)
-	(replace-match "")
-	(goto-char (point-min))
-	;; Replace all newlines not at the end of the section with two
-	;; backslashes.
-	(while (search-forward-regexp "\\(\n\\)." (1- (point-max)) t)
-	  (replace-match "\\\\" nil t nil 1))))))
+      (concat
+       (when org-brev--recipient-address-open
+	 (setq org-brev--recipient-address-open nil)
+	 (concat contents "}\n"))
+       (cond
+	(org-brev--had-opening
+	 (concat
+	  "\\signature{" contents "}\n"
+	  "\\closing{" heading "}\n"))
+	(t
+	 (setq org-brev--had-opening t)
+	 (concat "\\opening{" heading "}\n" contents))))))))
 
 (provide 'org-brev)
 ;;; org-brev.el ends here
