@@ -22,7 +22,7 @@
 
 ;; This module enables exporting Org files to the LaTeX `brev' class.
 ;; The `brev' class is a class for writing letters, that can be found
-;; at <http://www.asgeirnilsen.com/latex/>.  To use it, add the
+;; at <https://github.com/asgeirn/brev-cls/>.  To use it, add the
 ;; following option at the beginning of your Org file:
 ;;
 ;; #+LaTeX_CLASS: brev
